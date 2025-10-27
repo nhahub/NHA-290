@@ -1,6 +1,6 @@
 CLEANED T&O
 
-This repository contains the cleaned versions of two datasets:
+This file contains the cleaned versions of two datasets:
 
 Twosides Dataset
 
