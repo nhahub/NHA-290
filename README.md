@@ -25,6 +25,6 @@ Both datasets have been cleaned to remove irrelevant columns, handle missing val
 
 Files:
 
-twosides_cleaned.csv: The cleaned version of the Twosides Dataset.
+TwoSidesData.csv: The cleaned version of the Twosides Dataset.
 
-offsides_cleaned.csv: The cleaned version of the Offside Dataset.
+OffSideData.csv: The cleaned version of the Offside Dataset.
