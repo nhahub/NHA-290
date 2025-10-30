@@ -1,0 +1,20 @@
+      ┌──────────┐
+      │  INPUT   │ (User query)
+      └────┬─────┘
+           │
+           ▼
+ ┌─────────────────────┐
+ │  ORCHESTRATOR AGENT │  ← (LangChain / Gemini Agent)
+ └────┬────────────────┘
+      │
+      ├─► LLM Core (GPT-4 / MedPaLM)
+      │      │
+      │      ├─► Retrieval (RAG: LangChain + FAISS)
+      │      ├─► Tools (DDI, Symptom APIs)
+      │      ├─► Web Search (SerpAPI)
+      │      └─► Memory (SQL/Vector DB)
+      │
+      ▼
+ ┌──────────┐
+ │  OUTPUT  │  (Final medical explanation)
+ └──────────┘
