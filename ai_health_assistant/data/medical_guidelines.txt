@@ -1,0 +1,28 @@
+Educational medical guidelines (sample data)
+
+DISCLAIMER: This content is for educational purposes only and is not a
+substitute for professional medical advice, diagnosis, or treatment.
+
+Red Flags (seek urgent care):
+- Chest pain or pressure, especially with shortness of breath
+- Severe shortness of breath or difficulty breathing
+- Confusion, inability to stay awake, new severe weakness
+- Severe allergic reaction (anaphylaxis): swelling, wheeze, hives
+- Uncontrolled bleeding
+
+Common Cold Self-Care:
+- Rest, hydration, warm fluids
+- Acetaminophen for fever/pain as labeled
+- Honey for cough (not for children under 1 year)
+- Seek care if symptoms worsen or last >10 days
+
+Fever Guidance:
+- Monitor temperature and hydration
+- Antipyretics: acetaminophen or ibuprofen (avoid ibuprofen in certain conditions)
+- Seek care for persistent high fever, neck stiffness, severe headache, or rash
+
+Sore Throat:
+- Usually viral; supportive care
+- Consider strep testing if fever + tonsillar exudates + tender nodes
+
+
