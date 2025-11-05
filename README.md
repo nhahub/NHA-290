@@ -1,6 +1,11 @@
 # LoRA Fine-Tuning for Drug Interaction QA (RTX 3050 Ti Friendly)
 
-This repository contains a complete, reproducible pipeline to fine-tune a language model with LoRA (Low-Rank Adaptation) on large-scale drug interaction datasets and evaluate its performance. The project is optimized to run on a modest GPU (RTX 3050 Ti 4GB VRAM) using 4-bit quantization and memory-efficient training.
+This repository contains two complete LoRA training pipelines for drug-interaction question answering, both optimized for a 4 GB RTX 3050 Ti using 4-bit QLoRA:
+
+- **Model A – TinyLlama/TinyLlama-1.1B-Chat-v1.0** (`LoRA.ipynb`)
+- **Model B – Qwen/Qwen2-0.5B-Instruct** (`Qwen.ipynb`)
+
+Both notebooks load the cleaned TwoSides/OffSides datasets, fine-tune a base model with LoRA adapters, and ship with evaluation + confusion-matrix tooling.
 
 ---
 
@@ -8,211 +13,223 @@ This repository contains a complete, reproducible pipeline to fine-tune a langua
 
 ```
 LoRA_FT/
-├─ LoRA.ipynb                         # Main end‑to‑end notebook (recommended)
-├─ TwoSidesData.csv                   # Drug–drug → condition (PRR) dataset
-├─ OffSidesData.csv                   # Drug → condition (PRR) dataset
+├─ LoRA.ipynb                         # TinyLlama LoRA pipeline
+├─ Qwen.ipynb                         # Qwen LoRA pipeline
 ├─ outputs/
-│  └─ drug_lora_model/               # Fine‑tuned adapter + tokenizer
-│     ├─ adapter_model.safetensors   # LoRA adapter weights
-│     ├─ adapter_config.json         # LoRA adapter config
-│     ├─ tokenizer.json              # Tokenizer files
-│     ├─ tokenizer.model
-│     ├─ tokenizer_config.json
-│     ├─ special_tokens_map.json
-│     └─ confusion_matrix.png        # Saved during evaluation (Cell 12)
-└─ README.md                         # This document
+│  ├─ drug_lora_model/                # TinyLlama adapters + tokenizer + metrics
+│  └─ qwen2-0.5b-instruct_<timestamp>/ # Qwen adapters + tokenizer + metrics
+└─ README.md                          # This document
 ```
+
+> The CSV datasets (`TwoSidesData.csv`, `OffSidesData.csv`) are large and should live alongside the notebooks locally, but are intentionally excluded from Git.
 
 ---
 
-## Environment Setup (Windows, PowerShell)
-
-You only need a recent Python (3.12 recommended) and an NVIDIA GPU with drivers + CUDA runtime installed (you already have them).
-
-1) Create and activate a venv (optional but recommended):
+## Environment Setup (Windows + PowerShell)
 
 ```powershell
 py -3.12 -m venv venv
 venv\Scripts\activate
-```
 
-2) Install core Python packages (the notebook will also install what it needs):
-
-```powershell
 pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 pip install transformers peft datasets accelerate bitsandbytes pandas numpy scikit-learn matplotlib seaborn
 ```
 
-> Note: If you prefer, simply run the notebook – it installs missing packages inside the cells.
+You can also let each notebook install missing packages inline (it checks on import).
 
 ---
 
 ## Dataset Expectations
 
-- `TwoSidesData.csv` columns: `drug_1_concept_name`, `drug_2_concept_name`, `condition_concept_name`, `PRR`
-- `OffSidesData.csv` columns: `drug_concept_name`, `condition_concept_name`, `PRR`
+- `TwoSidesData.csv`: `drug_1_concept_name`, `drug_2_concept_name`, `condition_concept_name`, `PRR`
+- `OffSidesData.csv`: `drug_concept_name`, `condition_concept_name`, `PRR`
 
-Large files are supported; the notebook samples manageable amounts for quick runs and can be scaled up.
-
----
-
-## End‑to‑End Flow (LoRA.ipynb)
-
-Open `LoRA.ipynb` and run the cells top‑to‑bottom. The notebook is organized as:
-
-- Cell 1: CUDA and GPU check
-- Cell 2: Load datasets (from the project root)
-- Cell 3: Prepare instruction‑style training samples (configurable size)
-- Cell 4: Load base model with 4‑bit quantization (TinyLlama 1.1B Chat)
-- Cell 5: Configure and apply LoRA adapters
-- Cell 6: Tokenize dataset
-- Cell 7: Configure `TrainingArguments` (epochs, LR, batch size, etc.)
-- Cell 8: Train (15–60 minutes depending on settings)
-- Cell 9: Save LoRA adapter + tokenizer to `outputs/drug_lora_model/`
-- Cell 10: Quick interactive testing
-- Cell 11: Accuracy evaluation (exact/partial match)
-- Cell 12: Confusion matrix for top conditions (saved as PNG)
-
-### Recommended Training Settings
-
-- Base Model: `TinyLlama/TinyLlama-1.1B-Chat-v1.0` (fits in 4GB)
-- Quantization: 4‑bit NF4 via `bitsandbytes`
-- LoRA: `r=8`, `alpha=16`, targets `q_proj,k_proj,v_proj,o_proj`
-- Training size: 1,000 → 5,000 examples (increase as VRAM/time allow)
-- Epochs: 1 → 3 (more epochs → lower loss)
-- Effective batch size: gradient accumulation (e.g., 1×8)
+Both notebooks randomly sample from these tables each run, so they work even if the source CSVs are very large.
 
 ---
 
-## Using the Fine‑Tuned Output
+## Model A – TinyLlama (LoRA.ipynb)
 
-The trained artifacts are saved to:
+**Purpose:** Fast baseline LoRA fine-tuning (~15–60 minutes). Useful for quick experiments or small-batch training.
+
+### Notebook Flow
+
+1. CUDA/GPU check
+2. Load datasets and sample (default 1K–5K rows)
+3. Build instruction-style Q&A prompts
+4. Load TinyLlama 1.1B Chat in 4-bit NF4
+5. Apply LoRA (r=8, α=16)
+6. Tokenize + collate
+7. Train (default 1–3 epochs, grad-acc 8)
+8. Save adapters/tokenizer to `outputs/drug_lora_model/`
+9. Quick QA test (Cell 10)
+10. Accuracy + partial match evaluation (Cell 11)
+11. Confusion matrix and classification report (Cell 12)
+
+### Output Directory
 
 ```
-C:\Users\Muham\OneDrive\Desktop\LoRA_FT\outputs\drug_lora_model
+LoRA_FT/outputs/drug_lora_model/
+├─ adapter_model.safetensors
+├─ adapter_config.json
+├─ tokenizer.json / tokenizer.model / tokenizer_config.json / special_tokens_map.json
+├─ confusion_matrix.png
+└─ checkpoints/... (latest training checkpoints)
 ```
 
-Key files:
-- `adapter_model.safetensors` + `adapter_config.json`: LoRA adapter
-- `tokenizer.*`: Tokenizer used during training
-- `confusion_matrix.png`: Generated in evaluation
+### Sample TinyLlama Responses
 
-### Load for Inference (Python)
+- **Aspirin + Warfarin →** “Bone marrow failure”
+- **Metformin →** “Blood bicarbonate decreased”
+- **Ibuprofen + Naproxen →** “Dysuria”
+
+> Outputs may include extra commentary; post-process the `Answer:` section if you need only the condition.
+
+### TinyLlama Inference Snippet
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 import torch
 
-base_model = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-adapter_dir = r"C:\\Users\\Muham\\OneDrive\\Desktop\\LoRA_FT\\outputs\\drug_lora_model"
+base = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+adapter_dir = r"C:\Users\Muham\OneDrive\Desktop\LoRA_FT\outputs\drug_lora_model"
 
-# Load tokenizer from adapter_dir (ensures consistency)
 tokenizer = AutoTokenizer.from_pretrained(adapter_dir)
-
-# Load base model in 4‑bit
-model = AutoModelForCausalLM.from_pretrained(
-    base_model,
-    device_map="auto",
-    load_in_4bit=True,
-    torch_dtype=torch.float16
-)
-
-# Attach LoRA adapter
+model = AutoModelForCausalLM.from_pretrained(base, device_map="auto", load_in_4bit=True, torch_dtype=torch.float16)
 model = PeftModel.from_pretrained(model, adapter_dir)
 model.eval()
 
-# Ask a question
-prompt = "### Question:\nWhat adverse event might occur when taking aspirin and warfarin together?\n\n### Answer:\n"
-inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-with torch.no_grad():
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=100,
-        temperature=0.7,
-        do_sample=True,
-        top_p=0.9,
-        pad_token_id=tokenizer.eos_token_id
-    )
+def answer(question: str):
+    prompt = f"### Question:\n{question}\n\n### Answer:\n"
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    with torch.no_grad():
+        output = model.generate(**inputs, max_new_tokens=100, temperature=0.3, do_sample=True, top_p=0.9,
+                                pad_token_id=tokenizer.eos_token_id)
+    return tokenizer.decode(output[0], skip_special_tokens=True).split("### Answer:")[-1].strip()
 
-response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-answer = response.split("### Answer:")[-1].strip()
-print(answer)
+print(answer("What adverse event might occur when taking aspirin and warfarin together?"))
 ```
 
 ---
 
-## Evaluation (Accuracy + Confusion Matrix)
+## Model B – Qwen 0.5B (Qwen.ipynb)
 
-The notebook includes two evaluation cells:
+**Purpose:** Higher-quality LoRA fine-tuning with longer runs (configured ~6–7 hours). Uses larger training sets and more epochs for lower loss.
 
-- **Cell 11 – Accuracy**
-  - Creates a held‑out test set (not used for training)
-  - Computes Exact‑Match Accuracy and Partial‑Match Accuracy
-  - Prints sample predictions with ✓/✗ flags
+### Notebook Flow
 
-- **Cell 12 – Confusion Matrix**
-  - Focuses on top‑10 most frequent conditions in the test set
-  - Saves a heatmap as `outputs/drug_lora_model/confusion_matrix.png`
-  - Prints a `classification_report` summarizing precision/recall/F1
+1. Same dataset preparation as TinyLlama
+2. Load Qwen/Qwen2-0.5B-Instruct in 4-bit NF4 with gradient checkpointing
+3. Apply LoRA (r=8, α=16, expanded target modules)
+4. Tokenize + collate
+5. Train with scaled hyperparameters:
+   - `TRAIN_SIZE = 20_000`
+   - `EPOCHS = 6`
+   - `GRAD_ACC = 16`
+   - `LR = 1e-4`
+   - `warmup_ratio = 0.1`
+   - `logging_steps = 20`, `save_steps = 500`
+6. Save adapters/tokenizer to `outputs/qwen2-0.5b-instruct_<timestamp>/`
+7. Cell 10: quick sanity check
+8. Cell 11: full accuracy evaluation on 400 held-out samples
+9. Cell 12: confusion matrix + classification report
 
-> Note: Because this is **generative** QA (not strict classification), exact match can be harsh. Partial‑match accuracy is a more forgiving and often more realistic indicator (e.g., “haemorrhage” vs. “bleeding”).
+### Output Directory Example
+
+```
+LoRA_FT/outputs/qwen2-0.5b-instruct_20251030-180847/
+├─ adapter_model.safetensors
+├─ adapter_config.json
+├─ tokenizer.json / tokenizer.model / tokenizer_config.json / special_tokens_map.json
+├─ confusion_matrix.png
+├─ merges.txt / vocab.json / added_tokens.json
+└─ checkpoint-XXXX/ (multiple intermediate checkpoints)
+```
+
+### Training Expectations
+
+- Fits within 4 GB VRAM thanks to 4-bit quantization + gradient checkpointing
+- Run time ~6–7 hours with the hyperparameters above
+- Loss keeps dropping across six epochs; monitor with `nvidia-smi -l 1`
+
+### Sample Qwen Responses
+
+- **Aspirin + Warfarin →** “Bone marrow failure” (+ richer contextual comments)
+- **Metformin →** “Blood bicarbonate decreased” (+ extra clarifying sentences)
+- **Ibuprofen + Naproxen →** “Dysuria”
+
+> Qwen tends to add longer explanations. Parse the first sentence or the portion after “Answer:” if you need just one label.
+
+### Qwen Inference Snippet
+
+```python
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from peft import PeftModel
+import torch
+
+base = "Qwen/Qwen2-0.5B-Instruct"
+adapter_dir = r"C:\Users\Muham\OneDrive\Desktop\LoRA_FT\outputs\qwen2-0.5b-instruct_20251030-180847"
+
+tokenizer = AutoTokenizer.from_pretrained(adapter_dir)
+model = AutoModelForCausalLM.from_pretrained(base, load_in_4bit=True, device_map="auto", torch_dtype=torch.float16)
+model = PeftModel.from_pretrained(model, adapter_dir)
+model.eval()
+
+print(answer("What adverse event might occur when taking metformin?"))
+```
+
+(Reuse the `answer` helper from the TinyLlama example.)
 
 ---
 
-## Sample Questions & Outputs
+## Evaluation Outputs
 
-Below are samples observed after fine‑tuning (TinyLlama + LoRA on 1–5K examples):
+Both notebooks share the same evaluation logic:
 
-- Q: What adverse event might occur when taking aspirin and warfarin together?
-  - A: When aspirin and warfarin are taken together, they may cause **Bone marrow failure**.
+- **Accuracy metrics** (exact + partial match)
+- **Confusion matrix** for top-10 conditions
+- **classification_report** (precision/recall/F1)
 
-- Q: What adverse event is associated with metformin?
-  - A: The drug metformin is associated with **Blood bicarbonate decreased**.
+Artifacts are written to each model’s output folder, e.g.
 
-- Q: What adverse event might occur when taking ibuprofen and naproxen together?
-  - A: When ibuprofen and naproxen are taken together, they may cause **Dysuria**.
+```
+LoRA_FT/outputs/drug_lora_model/confusion_matrix.png
+LoRA_FT/outputs/qwen2-0.5b-instruct_20251030-180847/confusion_matrix.png
+```
 
-> Your results will improve as you increase training size and epochs. Expect additional commentary sometimes (LLMs may append extra sentences). You can post‑process the string to keep only the first sentence or the portion after “Answer:”.
+> Exact match can be strict (synonyms count as mismatches). Partial-match accuracy is a better indicator for clinical terminology.
 
 ---
 
-## Tips to Improve Quality
+## Tips & Troubleshooting
 
-- Increase `TRAIN_SIZE` in Cell 3 (e.g., 5,000 → 20,000) if your time allows
-- Train for more epochs (Cell 7: `num_train_epochs=3 → 5`)
-- Reduce generation randomness during evaluation (`temperature=0.2–0.3`)
-- Normalize medical terms (e.g., map synonyms) for accuracy scoring
-- Consider using a larger base model if VRAM allows (e.g., Qwen2 7B with CPU offloading)—training will be slower and may require more RAM/VRAM
+- **Batch size / OOM:** keep `per_device_train_batch_size = 1`, adjust `GRAD_ACC` for effective batch size
+- **Sequence length:** 256 works; drop to 128 if memory-constrained
+- **Temperature:** lower (0.2–0.3) during evaluation for more deterministic answers
+- **Checkpoint cleanup:** each run saves several checkpoints; delete older ones if disk space is tight
+- **Tokenizer mismatch:** always load tokenizer from the saved adapter directory
 
 ---
 
 ## Reproducibility Notes
 
-- Mixed precision and 4‑bit quantization are used for memory efficiency
-- LoRA adapts only a small fraction of parameters (fast and lightweight)
-- All paths in the notebook are relative to the project root unless stated
-- If you move the project, update the `BASE_DIR` in the notebook accordingly
-
----
-
-## Troubleshooting
-
-- `CUDA out of memory`: lower `TRAIN_SIZE`, sequence length (256 → 128), or increase `gradient_accumulation_steps`
-- `No module named 'llamafactory'`: not used in the final pipeline—this repo uses direct `transformers + peft`
-- `Tokenizer mismatch`: always load tokenizer from the adapter folder you saved
+- QLoRA (4-bit quantization + LoRA adapters) keeps VRAM usage low
+- Random sampling of the CSVs means runs differ slightly unless you fix seeds everywhere
+- Update `BASE_DIR` if you move the project
 
 ---
 
 ## License & Intended Use
 
-This project is for research and educational purposes. Drug interaction outputs are generated by an LLM; always verify results with clinical sources before making medical decisions.
+The fine-tuned models are for research/educational use only. Always verify drug-interaction outputs with clinical sources before acting on them.
 
 ---
 
 ## Acknowledgements
 
-- Base model: [TinyLlama/TinyLlama-1.1B-Chat-v1.0](https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0)
-- Libraries: Hugging Face `transformers`, `datasets`, `peft`, `accelerate`, `bitsandbytes`
-- Datasets: TwoSides / OffSides
+- TinyLlama/TinyLlama-1.1B-Chat-v1.0
+- Qwen/Qwen2-0.5B-Instruct
+- Hugging Face `transformers`, `peft`, `datasets`, `accelerate`, `bitsandbytes`
+- TwoSides / OffSides datasets
