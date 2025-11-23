@@ -1,0 +1,31 @@
+{
+  "total": 210,
+  "found": 198,
+  "intent_correct": 191,
+  "top1_accuracy": 187,
+  "top3_accuracy": 198,
+  "top5_accuracy": 198,
+  "avg_keywords": 96.46464646464646,
+  "by_type": {
+    "general": {
+      "total": 70,
+      "found": 60,
+      "intent_correct": 60
+    },
+    "food": {
+      "total": 70,
+      "found": 68,
+      "intent_correct": 61
+    },
+    "ddi": {
+      "total": 70,
+      "found": 70,
+      "intent_correct": 70
+    }
+  },
+  "found_pct": 94.28571428571429,
+  "intent_correct_pct": 90.95238095238095,
+  "top1_accuracy_pct": 89.04761904761905,
+  "top3_accuracy_pct": 94.28571428571429,
+  "top5_accuracy_pct": 94.28571428571429
+}

@@ -1,0 +1,20 @@
+
+# Core ML Libraries
+torch>=2.0.0
+transformers>=4.35.0
+sentence-transformers>=2.2.0
+
+# RAG & Embeddings
+langchain>=0.1.0
+langchain-community>=0.0.10
+langchain-huggingface>=0.0.1
+faiss-cpu>=1.7.4
+
+# UI
+gradio>=4.0.0
+
+# Google Search API
+google-api-python-client>=2.100.0
+
+# Utilities
+python-dotenv>=1.0.0
