@@ -1,6 +1,7 @@
 # Medical RAG Assistant
 
-A specialized medical chatbot designed to provide accurate information about drug interactions, food interactions, and general medication safety. This system leverages a Retrieval-Augmented Generation (RAG) architecture, combining a custom-tuned Large Language Model (LLM) with a local vector database and real-time web search to deliver reliable and context-aware responses.
+A specialized medical chatbot designed to provide accurate information about drug interactions, food interactions, and general medication safety. This system leverages a Retrieval-Augmented Generation (RAG) architecture, combining a custom-tuned Large Language Model (LLM) with a local vector database and real-time web search to deliver reliable and context-aware responses
+the vector DB Folder :https://drive.google.com/drive/folders/1tSkeSgLcuT7-5idryCxOsEBI7FL7x5Kh?usp=sharing
 
 ## 🚀 Features
 
