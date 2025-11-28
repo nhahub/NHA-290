@@ -9,15 +9,7 @@ def create_gradio_interface(
     theme: str = "soft"
 ) -> gr.Blocks:
     
-    with gr.Blocks(
-        title="Medical RAG Assistant",
-        theme=getattr(gr.themes, theme.capitalize())() if hasattr(gr.themes, theme.capitalize()) else gr.themes.Soft(),
-        css="""
-            .container {max-width: 1200px; margin: auto;}
-            .chat-container {border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);}
-            .examples-container {margin-top: 20px;}
-        """
-    ) as demo:
+    with gr.Blocks() as demo:
         
         gr.Markdown("""
         #  Medical RAG Assistant
@@ -39,11 +31,7 @@ def create_gradio_interface(
             with gr.Column(scale=3):
                 chatbot = gr.Chatbot(
                     label="Conversation",
-                    height=500,
-                    show_copy_button=True,
-                    bubble_full_width=False,
-                    avatar_images=(r"D:\chatbot\rag_implmetation\user-male-circle.jpg", r"D:\chatbot\rag_implmetation\bot.jpg"),
-                    type="messages"  
+                    height=500
                 )
                 
                 with gr.Row():
@@ -70,12 +58,11 @@ def create_gradio_interface(
 
                 examples = gr.Examples(
                     examples=[
-                        ["Hi, how are you?"],
+                        ["Hi"],
                         ["Can I take ibuprofen with paracetamol?"],
                         ["Food interactions with warfarin"],
-                        ["How can ularitide affect the efficacy of leuprolide?"],
                         ["Interaction between metformin and alcohol"],
-                        ["What happens if lepirudin is combined with antipyrine?"],
+                        ["What is the interaction between lepirudin and antipyrine?"],
                         ["Which foods or supplements may increase bleeding risk with urokinase?"],
                         ["How does alcohol affect blood sugar control with insulin human?"]
                     ],
@@ -101,8 +88,10 @@ def create_gradio_interface(
         def respond(message, session_id, history):
             if not message.strip():
                 return "", history
+            
             answer, _ = answer_fn(message, session_id, history)
             
+            # Append in messages format for Gradio 6.x
             history.append({"role": "user", "content": message})
             history.append({"role": "assistant", "content": answer})
             
